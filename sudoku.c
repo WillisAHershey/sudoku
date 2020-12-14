@@ -106,7 +106,7 @@ int analyzePossibilities(short board[],int index){
 //This function sets the bits of a short to represent all of the numbers not currently present in some cell's row, column, or block
 //Returns 1 if that cell can only hold one value, so that cell is now set
 //Returns -1 if that cell in ineligable to hold any number, so we've encountered a contradiction, and need to revert with the logstack
-//And returns 0 otherwise, to indicate that the cells bits are properly set
+//And returns 0 otherwise, to indicate that the cell's bits are properly set
 int setPossibilities(short board[],int index){
   short val=ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE;
   for(int c=0,run=index-index%9;c<9;++c,++run){
