@@ -7,7 +7,11 @@
 
 /*	This program models the numbers 1-9 that could occupy some cell of the Sudoku puzzle as the first through ninth bits of a short int
  *	Modeling them this ways allows these numbers to be bitwise-ored together to produce values representing multiple numbers at once
+ *	The use of short ints potentially saves memory, as short is the smallest int type guaranteed to be at least nine bits wide
  */
+
+
+//Values defined in bitshift-notation to avoid typos
 
 #define ONE	0x1
 #define TWO	(0x1<<1)
@@ -19,16 +23,29 @@
 #define EIGHT	(0x1<<7)
 #define NINE	(0x1<<8)
 
-//This tells the calling function if the short in question is set to a single value
-static inline int set(short in){
-  if(in==ONE||in==TWO||in==THREE||in==FOUR||in==FIVE||in==SIX||in==SEVEN||in==EIGHT||in==NINE)
+#define SET	(0x1<<9)
+
+//This tells the calling function if the short in question is set to a single value. (This could likely be optimized by using a tenth bit)
+static inline int set(short *i){
+  short in=*i;
+  if(in&SET)
 	return 1;
-  else
-	return 0;
+  int found=0;
+  for(short bit=ONE;bit<=NINE;bit<<=1)
+	if(in&bit){
+		if(found)
+			return 0;
+		else
+			found=1;
+	}
+  if(found)
+	*i|=SET;
+  return found;
 }
 
-//Converts from representation of number to integer
+//Converts from bit-representation of number to standard binary integer
 static inline int translate(short in){
+	in=in&~SET;
 	if(in==ONE)
 		return 1;
 	else if(in==TWO)
@@ -52,15 +69,18 @@ static inline int translate(short in){
 }
 
 //This function attempts to set cells to their numbers by checking if there exists a number this cell could hold that no other
-//cell in its row, column ,or block could hold. If this function succeeds, it retuns 1, otherwise, 0.
+//cell in its row, column ,or block could hold. If this function succeeds in setting the cell, it retuns 1, otherwise, 0.
 int analyzePossibilities(short board[],int index){
+  //Beginning with a value that is the bitwise or of all values that could be held in the cell
   short val=board[index];
   int found=0;
+  //For each set bit in that value
   for(short bit=ONE;bit<=NINE;bit<<=1){
 	if(!(val&bit))
 		continue;
+	//Search the other unset cells in the row, if no other can hold that bit, set the cell and return 1
 	for(int c=0,run=index-index%9;c<9;++c,++run){
-		if(run==index||set(board[run]))
+		if(run==index||set(&board[run]))
 			continue;
 		if(board[run]&bit){
 			found=1;
@@ -73,8 +93,9 @@ int analyzePossibilities(short board[],int index){
 	}
 	else
 		found=0;
+	//Search the other unset cells in the column, if no other can hold that bit, set the cell and return 1
 	for(int c=0,run=index%9;c<9;++c,run+=9){
-		if(run==index||set(board[run]))
+		if(run==index||set(&board[run]))
 			continue;
 		if(board[run]&bit){
 			found=1;
@@ -87,8 +108,9 @@ int analyzePossibilities(short board[],int index){
 	}
 	else
 		found=0;
+	//Search the other unset cells in the block, if no other can hold that bit, set the cell and return 1
 	for(int c=0,run=index-index%27+index%9-(index%9)%3;c<9;++c,run+=run%3==2?7:1){
-		if(run==index||set(board[run]))
+		if(run==index||set(&board[run]))
 			continue;
 		if(board[run]&bit){
 			found=1;
@@ -99,6 +121,7 @@ int analyzePossibilities(short board[],int index){
 		board[index]=bit;
 		return 1;
 	}
+	//If there exists no value in the cell's row column or block that must go in this cell, return 0
   }
   return 0;
 }
@@ -107,28 +130,43 @@ int analyzePossibilities(short board[],int index){
 //Returns 1 if that cell can only hold one value, so that cell is now set
 //Returns -1 if that cell in ineligable to hold any number, so we've encountered a contradiction, and need to revert with the logstack
 //And returns 0 otherwise, to indicate that the cell's bits are properly set
+//
+//For instance if some cell has a 4,5,7,8 and 9 somewhere in its row/column/block, but not 1,2,3 and 6, this function will store the value
+//ONE|TWO|THREE|SIX or 0x27 in that cell, and return zero
+//
+//If some cell has a 1,2,3,5,6,7,8, and 9 somewhere in its row/column/block, but not 4, this function will store the value FOUR or 0x8 in
+//that cell, and return one
+//
+//Lastly if some cell has all 1,2,3,4,5,6,7,8 and 9 in its row/column/block, this function will store the value 0x0 in the cell and return -1
+
 int setPossibilities(short board[],int index){
+  //We begin with the value 0x1FF, which represents a cell that could hold any value
   short val=ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE;
+  //For each other cell in the row that is set, we remove that bit from the value
   for(int c=0,run=index-index%9;c<9;++c,++run){
 	if(run==index)
 		continue;
-	if(set(board[run]))
+	if(set(&board[run]))
 		val&=~board[run];
   }
+  //For each other cell in the column that is set we remove that bit from the value
   for(int c=0,run=index%9;c<9;++c,run+=9){
 	if(run==index)
 		continue;
-	if(set(board[run]))
+	if(set(&board[run]))
 		val&=~board[run];
   }
+  //For each other cell in the block that is set we remove that bit from the value
   for(int c=0,run=index-index%27+index%9-(index%9)%3;c<9;++c,run+=run%3==2?7:1){
 	if(run==index)
 		continue;
-	if(set(board[run]))
+	if(set(&board[run]))
 		val&=~board[run];
   }
+  //What remains is the bitwise or of the values not present, which we store in the cell
   board[index]=val;
-  if(set(val))
+  //Returning 1 if it's one possible value, -1 if there are no possible values, and 0 if we have more than one
+  if(set(&val))
 	return 1;
   else if(!val)
 	return -1;
@@ -153,7 +191,7 @@ int verify(short board[]){
   for(int c=0;c<9;++c){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
-		if(set(board[c*9+d]))
+		if(set(&board[c*9+d]))
 			++count[translate(board[c*9+d])-1];
 	for(int d=0;d<9;++d)
 		if(count[d]>1)
@@ -162,7 +200,7 @@ int verify(short board[]){
   for(int c=0;c<9;++c){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
-		if(set(board[c+d*9]))
+		if(set(&board[c+d*9]))
 			++count[translate(board[c+d*9])-1];
 	for(int d=0;d<9;++d)
 		if(count[d]>1)
@@ -171,7 +209,7 @@ int verify(short board[]){
   for(int c=0;c<9;++c){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
-		if(set(board[(c/3)*27+(c%3)*3+(d/3)*9+(d%3)]))
+		if(set(&board[(c/3)*27+(c%3)*3+(d/3)*9+(d%3)]))
 			++count[translate(board[(c/3)*27+(c%3)*3+(d/3)*9+(d%3)])-1];
 	for(int d=0;d<9;++d)
 		if(count[c]>1)
@@ -213,7 +251,7 @@ log* revert(short board[],log *head){
 //Returns the current value of the loghead
 log* setAllPossibilities(short board[],log *head){
   for(int c=0;c<81;++c)
-	if(!set(board[c])){
+	if(!set(&board[c])){
 		int ret=setPossibilities(board,c);
 		if(ret){
 			c=-1;
@@ -232,31 +270,42 @@ void solve(short board[]){
   int solved=0;
   log *head=NULL;
   while(!solved){
+	//We begin by setting all unset cells to their bitwise ors of possibilities
 	head=setAllPossibilities(board,head);
 	for(int c=0;c<81;++c){
-		if(!set(board[c]))
+		//Then for each unset cell in the board, we try to set it using analyzePossibilities()
+		if(!set(&board[c]))
 			if(analyzePossibilities(board,c)){
+				//If it succeeds, we reset the bitwise ors for the whole board, and start over
 				head=setAllPossibilities(board,head);
 				c=-1;
 			}
 	}
+	//Eventually we reach a point where either the puzzle is solved, or we must guess to continue to make progress
 	solved=1;
 	for(int c=0;c<81;++c)
-		if(!set(board[c])){
+		if(!set(&board[c])){
+			//If some cell is not set, the puzzle is not solved
 			solved=0;
 			for(short bit=ONE;bit<=NINE;bit<<=1)
 				if(board[c]&bit){
+					//So we create a logfile with a copy of the current board, set the first unset cell to its lowest possibility,
+					//note in the logfile which cell was changed and to what, and start again from the top with setAllPossibilities()
 					log *hold=malloc(sizeof(log));
 					*hold=(log){.index=c,.val=bit,.next=head};
 					memcpy(hold->old,board,81*sizeof(short));
 					board[c]=bit;
 					head=hold;
-					bit=(NINE)<<1;
 					c=81;
+					break;
 				}
 		}
+	else
+		board[c]|=SET;
   }
+  //Control makes it here when the puzzle is solved
   while(head){
+	//Free any logfiles if there are any
 	log *hold=head->next;
 	free(head);
 	head=hold;
