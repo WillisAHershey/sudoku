@@ -300,8 +300,8 @@ void solve(short board[]){
 					break;
 				}
 		}
-	else
-		board[c]|=SET;
+		else
+			board[c]|=SET;
   }
   //Control makes it here when the puzzle is solved
   while(head){
@@ -323,31 +323,31 @@ int main(int args,char *argv[]){
   for(int c=0;c<81;++c)
 	switch(argv[c+1][0]-'0'){
 		case 1:
-			board[c]=ONE;
+			board[c]=ONE|SET;
 			break;
 		case 2:
-			board[c]=TWO;
+			board[c]=TWO|SET;
 			break;
 		case 3:
-			board[c]=THREE;
+			board[c]=THREE|SET;
 			break;
 		case 4:
-			board[c]=FOUR;
+			board[c]=FOUR|SET;
 			break;
 		case 5:
-			board[c]=FIVE;
+			board[c]=FIVE|SET;
 			break;
 		case 6:
-			board[c]=SIX;
+			board[c]=SIX|SET;
 			break;
 		case 7:
-			board[c]=SEVEN;
+			board[c]=SEVEN|SET;
 			break;
 		case 8:
-			board[c]=EIGHT;
+			board[c]=EIGHT|SET;
 			break;
 		case 9:
-			board[c]=NINE;
+			board[c]=NINE|SET;
 			break;
 		default:
 			board[c]=0;
