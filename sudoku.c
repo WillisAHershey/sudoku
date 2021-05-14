@@ -7,7 +7,7 @@
 
 /*	This program models the numbers 1-9 that could occupy some cell of the Sudoku puzzle as the first through ninth bits of a short int
  *	Modeling them this ways allows these numbers to be bitwise-ored together to produce values representing multiple numbers at once
- *	The use of short ints potentially saves memory, as short is the smallest int type guaranteed to be at least nine bits wide
+ *	The use of short ints potentially saves memory, as short is the smallest int type guaranteed to be at least ten bits wide
  */
 
 
@@ -22,10 +22,10 @@
 #define SEVEN	(0x1<<6)
 #define EIGHT	(0x1<<7)
 #define NINE	(0x1<<8)
-
+//The definition of SET as the tenth bit saves computational time for set() defined below
 #define SET	(0x1<<9)
 
-//This tells the calling function if the short in question is set to a single value. (This could likely be optimized by using a tenth bit)
+//This tells the calling function if the short in question is set to a single value
 static inline int set(short *i){
   short in=*i;
   if(in&SET)
@@ -38,8 +38,10 @@ static inline int set(short *i){
 		else
 			found=1;
 	}
-  if(found)
+  if(found){
+	printf("FOUND\n");
 	*i|=SET;
+  }
   return found;
 }
 
@@ -88,7 +90,7 @@ int analyzePossibilities(short board[],int index){
 		}
 	}
 	if(!found){
-		board[index]=bit;
+		board[index]=bit|SET;
 		return 1;
 	}
 	else
@@ -103,7 +105,7 @@ int analyzePossibilities(short board[],int index){
 		}
 	}
 	if(!found){
-		board[index]=bit;
+		board[index]=bit|SET;
 		return 1;
 	}
 	else
@@ -118,7 +120,7 @@ int analyzePossibilities(short board[],int index){
 		}
 	}
 	if(!found){
-		board[index]=bit;
+		board[index]=bit|SET;
 		return 1;
 	}
 	//If there exists no value in the cell's row column or block that must go in this cell, return 0
@@ -140,7 +142,7 @@ int analyzePossibilities(short board[],int index){
 //Lastly if some cell has all 1,2,3,4,5,6,7,8 and 9 in its row/column/block, this function will store the value 0x0 in the cell and return -1
 
 int setPossibilities(short board[],int index){
-  //We begin with the value 0x1FF, which represents a cell that could hold any value
+  //We begin with the value 0x1FF, which represents a cell that could hold any value and is not set
   short val=ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE;
   //For each other cell in the row that is set, we remove that bit from the value
   for(int c=0,run=index-index%9;c<9;++c,++run){
@@ -166,8 +168,10 @@ int setPossibilities(short board[],int index){
   //What remains is the bitwise or of the values not present, which we store in the cell
   board[index]=val;
   //Returning 1 if it's one possible value, -1 if there are no possible values, and 0 if we have more than one
-  if(set(&val))
+  if(set(&val)){
+	board[index]|=SET;
 	return 1;
+  }
   else if(!val)
 	return -1;
   else
