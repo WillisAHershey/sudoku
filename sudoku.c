@@ -38,10 +38,8 @@ static inline int set(short *i){
 		else
 			found=1;
 	}
-  if(found){
-	printf("FOUND\n");
+  if(found)
 	*i|=SET;
-  }
   return found;
 }
 
@@ -168,12 +166,10 @@ int setPossibilities(short board[],int index){
   //What remains is the bitwise or of the values not present, which we store in the cell
   board[index]=val;
   //Returning 1 if it's one possible value, -1 if there are no possible values, and 0 if we have more than one
-  if(set(&val)){
-	board[index]|=SET;
-	return 1;
-  }
-  else if(!val)
+  if(!val)
 	return -1;
+  else if(set(&val)) //set() will or in SET for us
+	return 1;
   else
 	return 0;
 }
@@ -239,7 +235,8 @@ log* revert(short board[],log *head){
 	memcpy(board,head->old,81*sizeof(short));
 	for(short bit=head->val<<1;bit<=NINE;bit<<=1)
 		if(board[head->index]&bit){
-			board[head->index]=head->val=bit;
+			board[head->index]=bit|SET;
+			head->val=bit;
 			return head;
 		}
 	log *hold=head->next;
@@ -298,14 +295,12 @@ void solve(short board[]){
 					log *hold=malloc(sizeof(log));
 					*hold=(log){.index=c,.val=bit,.next=head};
 					memcpy(hold->old,board,81*sizeof(short));
-					board[c]=bit;
+					board[c]=bit|SET;
 					head=hold;
 					c=81;
 					break;
 				}
 		}
-		else
-			board[c]|=SET;
   }
   //Control makes it here when the puzzle is solved
   while(head){
