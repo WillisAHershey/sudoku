@@ -176,12 +176,25 @@ int setPossibilities(short board[],int index){
 
 //Prints the current puzzle board, printing unset cells as zeroes
 void printBoard(short board[]){
-  printf("%d",translate(board[0]));
+  int t = translate(board[0]);
+  if(t)
+  	printf("%d",t);
+  else
+	printf("-");
   for(int c=1;c<81;++c){
-	if(!(c%9))
-		printf("\n%d",translate(board[c]));
-	else
-		printf(",%d",translate(board[c]));
+	t = translate(board[c]);
+	if(!(c%9)){
+		if(t)
+			printf("\n%d",t);
+		else
+			printf("\n-");
+	}
+	else{
+		if(t)
+			printf(",%d",t);
+		else
+			printf(",-");
+	}
   }
   printf("\n\n");
 }
@@ -356,7 +369,8 @@ int main(int args,char *argv[]){
 	fprintf(stderr,"Puzzle has a contradiction and cannot be solved\n");
 	exit(EXIT_FAILURE);
   }
-  printf("Puzzle is verified and accepted\n\nINPUT:\n");
+  else
+	printf("Puzzle is verified and accepted\n\nINPUT:\n");
   printBoard(board);
   solve(board);
   if(!verify(board)){
