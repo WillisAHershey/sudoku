@@ -26,11 +26,11 @@
 #define SET	(0x1<<9)
 
 //This tells the calling function if the short in question is set to a single value
-static inline int set(short *i){
+static inline _Bool set(short *i){
   short in=*i;
   if(in&SET)
 	return 1;
-  int found=0;
+  _Bool found=0;
   for(short bit=ONE;bit<=NINE;bit<<=1)
 	if(in&bit){
 		if(found)
@@ -70,10 +70,10 @@ static inline int translate(short in){
 
 //This function attempts to set cells to their numbers by checking if there exists a number this cell could hold that no other
 //cell in its row, column ,or block could hold. If this function succeeds in setting the cell, it retuns 1, otherwise, 0.
-int analyzePossibilities(short board[],int index){
+_Bool analyzePossibilities(short board[],int index){
   //Beginning with a value that is the bitwise or of all values that could be held in the cell
   short val=board[index];
-  int found=0;
+  _Bool found=0;
   //For each set bit in that value
   for(short bit=ONE;bit<=NINE;bit<<=1){
 	if(!(val&bit))
@@ -187,7 +187,7 @@ void printBoard(short board[]){
 }
 
 //Verifies that each row column and block of the puzzle contains no more than one of each number
-int verify(short board[]){
+_Bool verify(short board[]){
   for(int c=0;c<9;++c){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
