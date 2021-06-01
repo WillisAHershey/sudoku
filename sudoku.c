@@ -174,7 +174,7 @@ int setPossibilities(short board[],int index){
 	return 0;
 }
 
-//Prints the current puzzle board, printing unset cells as zeroes
+//Prints the current puzzle board, printing unset cells as dashes
 void printBoard(short board[]){
   int t = translate(board[0]);
   if(t)
@@ -232,6 +232,7 @@ _Bool verify(short board[]){
 }
 
 //This data structure allows the puzzle board to be reverted when a contradiction is encountered from a bad guess
+//The next pointer allows them to form a stack
 typedef struct logStruct{
   int index;
   short val;
