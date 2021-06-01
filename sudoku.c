@@ -281,7 +281,7 @@ log* setAllPossibilities(short board[],log *head){
 //If there are, it produces a logfile for the top of the logstack, picks a number for the unset cell, and starts over
 //Once all cells are set it frees the logstack and returns
 void solve(short board[]){
-  int solved=0;
+  _Bool solved=0;
   log *head=NULL;
   while(!solved){
 	//We begin by setting all unset cells to their bitwise ors of possibilities
