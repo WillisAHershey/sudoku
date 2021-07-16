@@ -134,7 +134,7 @@ _Bool analyzePossibilities(short board[],int index){
 //For instance if some cell has a 4,5,7,8 and 9 somewhere in its row/column/block, but not 1,2,3 and 6, this function will store the value
 //ONE|TWO|THREE|SIX or 0x27 in that cell, and return zero
 //
-//If some cell has a 1,2,3,5,6,7,8, and 9 somewhere in its row/column/block, but not 4, this function will store the value FOUR or 0x8 in
+//If some cell has a 1,2,3,5,6,7,8, and 9 somewhere in its row/column/block, but not 4, this function will store the value FOUR|SET or 0x208 in
 //that cell, and return one
 //
 //Lastly if some cell has all 1,2,3,4,5,6,7,8 and 9 in its row/column/block, this function will store the value 0x0 in the cell and return -1
@@ -167,11 +167,11 @@ int setPossibilities(short board[],int index){
   board[index]=val;
   //Returning 1 if it's one possible value, -1 if there are no possible values, and 0 if we have more than one
   if(!val)
-	return -1;
+	return -1;   //-1 indicates that this puzzle has a contradiction and needs to be reverted
   else if(set(&val)) //set() will or in SET for us
-	return 1;
+	return 1;    //1 indicates that control should start the loop over and call this function on every value again because circumstances have changed
   else
-	return 0;
+	return 0;    //0 indicates that control can continue as it was
 }
 
 //Prints the current puzzle board, printing unset cells as dashes
@@ -261,7 +261,7 @@ log* revert(short board[],log *head){
   exit(EXIT_FAILURE);
 }
 
-//This function sets the bits of every unset cell in the board, making sure to start over if some cell is set by happenstance
+//This function sets the bits of every unset cell in the board, making sure to start over if some cell is set in the process
 //It also reverts the board and starts over if it encounters a contradiction
 //Returns the current value of the loghead
 log* setAllPossibilities(short board[],log *head){
