@@ -5,7 +5,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*	This program models the numbers 1-9 that could occupy some cell of the Sudoku puzzle as the first through ninth bits of a short int
+/*	"Sudoku" is a number puzzle with a 9x9 grid of "cells". Each "cell" must hold one number between 1 and 9 inclusive.
+ *
+ *	For the sake of a reader understanding the comments in this program, the "board" refers to the playing field of the standard         0   1   2 | 3   4   5 | 6   7   8
+ *	Sudoku game with 81 cells. The "rows" are the nine horizontal linear subsections of the "board", the "columns" are the nine          9  10  11 |12  13  14 |15  16  17
+ *	vertical linear subsections of the "board", and the "blocks" are the nine 3x3 square subsections of the "board". Each of the        18  19  20 |21  22  23 |24  25  26
+ *	"rows", "columns", and "blocks" contains exactly nine cells, and each cell in the board is within exactly one "row", "column"       ----------------------------------
+ *	and "block". If I've lost you you should perhaps do some reading on Sudoku puzzles before continuing.                               27  28  29 |30  31  32 |33  34  35
+ *                                                                                                                                          36  37  38 |39  40  41 |42  43  44
+ *	This program models the board as an array of 81 short ints, with indices from 0-80. Rows begin at indices 0,9,18,27,36,45,54,       45  46  47 |48  49  50 |51  52  53
+ *	63, and 72. Columns begin at indices 0,1,2,3,4,5,6,7, and 8. Blocks begin at indices 0,3,6,27,30,33,54,57, and 60.                  ----------------------------------
+ *                                                                                                                                          54  55  56 |57  58  59 |60  61  62
+ *	In accordace with the rules of Sudoku, each row, column and block of the board must contain each of the numbers from 1-9, and       63  64  65 |66  67  68 |69  70  71
+ *	since each of these subsections contains only 9 cells, there can be no duplicates of any number in any row, column, or block.       72  73  74 |75  76  77 |78  79  80
+ *
+ *	This program takes a list of 81 integers as a representation of a puzzle board, finds a solution, and prints it out.
+ */
+
+
+/*	This program models the numbers 1-9 that could occupy some cell of the Sudoku puzzle as the first through ninth bits of a short int.
  *	Modeling them this ways allows these numbers to be bitwise-ored together to produce values representing multiple numbers at once
  *	The use of short ints potentially saves memory, as short is the smallest int type guaranteed to be at least ten bits wide
  */
@@ -25,7 +43,7 @@
 //The definition of SET as the tenth bit saves computational time for set() defined below
 #define SET	(0x1<<9)
 
-//This tells the calling function if the short in question is set to a single value
+//This tells the calling function if the parameter's short is set to a single value. If it is, but the set bit is unset, it ors it in.
 static inline _Bool set(short *i){
   short in=*i;
   if(in&SET)
@@ -71,59 +89,53 @@ static inline int translate(short in){
 //This function attempts to set cells to their numbers by checking if there exists a number this cell could hold that no other
 //cell in its row, column ,or block could hold. If this function succeeds in setting the cell, it retuns 1, otherwise, 0.
 _Bool analyzePossibilities(short board[],int index){
-  //Beginning with a value that is the bitwise or of all values that could be held in the cell
-  short val=board[index];
-  _Bool found=0;
-  //For each set bit in that value
-  for(short bit=ONE;bit<=NINE;bit<<=1){
-	if(!(val&bit))
+  short val=board[index];				//This value is the current value of what I will call the focus cell. It has a 1 in the corresponding position of every value that could legally be stored there
+  for(short bit=ONE;bit<=NINE;bit<<=1){			//For each possible value, focus value, from ONE to NINE
+	if(!(val&bit))					//If the focus cell doesn't have a 1 in that bit position skip it
 		continue;
-	//Search the other unset cells in the row, if no other can hold that bit, set the cell and return 1
-	for(int c=0,run=index-index%9;c<9;++c,++run){
-		if(run==index||set(&board[run]))
+	_Bool found=0;
+	for(int c=0,run=index-index%9;c<9;++c,++run){ 	//For each cell in the focus cell's row
+		if(run==index||set(&board[run]))	//Skip over the focus cell and any other cell that is already set
 			continue;
-		if(board[run]&bit){
+		if(board[run]&bit){			//If some other cell has a 1 in focus value's position then we can't set the focus cell's position on account of it's row
 			found=1;
 			break;
 		}
 	}
-	if(!found){
+	if(!found){					//If no other cell in focus cell's row can hold some focus value then set focus cell to that value ored with SET and return 1
 		board[index]=bit|SET;
 		return 1;
 	}
-	else
+	else						//Otherwise try again with focus cell's column
 		found=0;
-	//Search the other unset cells in the column, if no other can hold that bit, set the cell and return 1
 	for(int c=0,run=index%9;c<9;++c,run+=9){
 		if(run==index||set(&board[run]))
 			continue;
 		if(board[run]&bit){
 			found=1;
 			break;
-		}
+		}					//... same algorithm as before
 	}
 	if(!found){
 		board[index]=bit|SET;
 		return 1;
 	}
 	else
-		found=0;
-	//Search the other unset cells in the block, if no other can hold that bit, set the cell and return 1
-	for(int c=0,run=index-index%27+index%9-(index%9)%3;c<9;++c,run+=run%3==2?7:1){
-		if(run==index||set(&board[run]))
-			continue;
-		if(board[run]&bit){
-			found=1;
-			break;
-		}
+		found=0;				//Otherwise try again with focus cell's block
+	for(int c=0,run=index-index%27+index%9-index%3;c<9;++c,run+=run%3==2?7:1){				//Blocks are hard to iterate through so this loop is super confusing. Let me explain:
+		if(run==index||set(&board[run]))								//For any index on the board from 0-80, index-index%27 is 0, 26, or 54, which represents a block
+			continue;										//in the top row, middle row, or bottom row, respectively. adding to that index%9-index%3 pushes
+		if(board[run]&bit){										//us forward 0, 3, or 6 cells for left, center and right. This puts us in the top left corner of
+			found=1;										//whatever block the focus cell is in. Each iteration we add 1 to index unless our index%3 is 2, 
+			break;											//because in that case we've reached the right edge of the block, so we must add 7 to wrap around
+		}					//... same algorithm once again				//to the left edge of the next row.
 	}
 	if(!found){
 		board[index]=bit|SET;
 		return 1;
 	}
-	//If there exists no value in the cell's row column or block that must go in this cell, return 0
   }
-  return 0;
+  return 0;						//If we cannot set focus cell's value on account of the cells in its row column or block we return zero
 }
 
 //This function sets the bits of a short to represent all of the numbers not currently present in some cell's row, column, or block
@@ -157,7 +169,7 @@ int setPossibilities(short board[],int index){
 		val&=~board[run];
   }
   //For each other cell in the block that is set we remove that bit from the value
-  for(int c=0,run=index-index%27+index%9-(index%9)%3;c<9;++c,run+=run%3==2?7:1){
+  for(int c=0,run=index-index%27+index%9-index%3;c<9;++c,run+=run%3==2?7:1){
 	if(run==index)
 		continue;
 	if(set(&board[run]))
@@ -287,7 +299,7 @@ void solve(short board[]){
   while(!solved){
 	//We begin by setting all unset cells to their bitwise ors of possibilities
 	head=setAllPossibilities(board,head);
-	for(int c=0;c<81;++c){
+	for(int c=0;c<81;++c)
 		//Then for each unset cell in the board, we try to set it using analyzePossibilities()
 		if(!set(&board[c]))
 			if(analyzePossibilities(board,c)){
@@ -295,7 +307,6 @@ void solve(short board[]){
 				head=setAllPossibilities(board,head);
 				c=-1;
 			}
-	}
 	//Eventually we reach a point where either the puzzle is solved, or we must guess to continue to make progress
 	solved=1;
 	for(int c=0;c<81;++c)
