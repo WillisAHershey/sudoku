@@ -313,18 +313,34 @@ void solve(short board[]){
 		if(!set(&board[c])){
 			//If some cell is not set, the puzzle is not solved
 			solved=0;
-			for(short bit=ONE;bit<=NINE;bit<<=1)
-				if(board[c]&bit){
-					//So we create a logfile with a copy of the current board, set the first unset cell to its lowest possibility,
-					//note in the logfile which cell was changed and to what, and start again from the top with setAllPossibilities()
-					log *hold=malloc(sizeof(log));
-					*hold=(log){.index=c,.val=bit,.next=head};
-					memcpy(hold->old,board,81*sizeof(short));
-					board[c]=bit|SET;
-					head=hold;
-					c=81;
-					break;
+			int smallestParity=9;
+			int index=c;
+			int val=ONE;
+			for(;c<81;++c){						//This for loop chooses which cell to guess on by picking the cell with the fewest possibilities
+				if(set(&board[c]))
+					continue;
+				int parity=0;
+				int lowestBit=NINE;
+				for(short bit=NINE;bit!=0;bit>>=1)
+					if(board[c]&bit){
+						if(++parity>smallestParity)
+							break;
+						lowestBit=bit;
+					}
+				if(parity<smallestParity){
+					smallestParity=parity;
+					index=c;
+					val=lowestBit;
+					if(parity==2)				//2 is the lowest possible parity of a cell that is not set
+						break;
 				}
+			}
+			log *hold=malloc(sizeof(log));				//Make a record of which cell was changed and to what and put it on the log stack
+			*hold=(log){.index=index,.val=val,.next=head};
+			memcpy(hold->old,board,81*sizeof(short));
+			board[index]=val|SET;
+			head=hold;
+			break;
 		}
   }
   //Control makes it here when the puzzle is solved
