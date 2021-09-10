@@ -3,7 +3,7 @@ WillisAHershey@gmail.com
 
 Sudoku Puzzle Solver
 
-Enter the puzzle as a series of arguments from left to right top to bottom, using dashes or zeroes for empty cells
+Enter the puzzle as a series of arguments from left to right top to bottom, using dashes, zeroes, or any other non 1-9 non-whitespace character for empty cells
 
 e.g. ./sudoku {2,0,0,3,4,0,0,.....}
 
