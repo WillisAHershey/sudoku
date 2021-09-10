@@ -29,19 +29,19 @@
  */
 
 
-//Values defined in bitshift-notation to avoid typos
+//Values defined recursively in bitshift-notation to avoid typos
 
 #define ONE	0x1
-#define TWO	(0x1<<1)
-#define THREE	(0x1<<2)
-#define FOUR	(0x1<<3)
-#define FIVE	(0x1<<4)
-#define SIX	(0x1<<5)
-#define SEVEN	(0x1<<6)
-#define EIGHT	(0x1<<7)
-#define NINE	(0x1<<8)
+#define TWO	(ONE<<1)
+#define THREE	(TWO<<1)
+#define FOUR	(THREE<<1)
+#define FIVE	(FOUR<<1)
+#define SIX	(FIVE<<1)
+#define SEVEN	(SIX<<1)
+#define EIGHT	(SEVEN<<1)
+#define NINE	(EIGHT<<1)
 //The definition of SET as the tenth bit saves computational time for set() defined below
-#define SET	(0x1<<9)
+#define SET	(NINE<<1)
 
 //This tells the calling function if the parameter's short is set to a single value. If it is, but the set bit is unset, it ors it in.
 static inline _Bool set(short *i){
