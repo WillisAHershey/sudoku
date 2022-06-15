@@ -217,28 +217,22 @@ _Bool verify(short board[]){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
 		if(set(&board[c*9+d]))
-			++count[translate(board[c*9+d])-1];
-	for(int d=0;d<9;++d)
-		if(count[d]>1)
-			return 0;
+			if(++count[translate(board[c*9+d])-1]==2)
+				return 0;
   }
   for(int c=0;c<9;++c){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
 		if(set(&board[c+d*9]))
-			++count[translate(board[c+d*9])-1];
-	for(int d=0;d<9;++d)
-		if(count[d]>1)
-			return 0;
+			if(++count[translate(board[c+d*9])-1]==2)
+				return 0;
   }
   for(int c=0;c<9;++c){
 	char count[9]={0,0,0,0,0,0,0,0,0};
 	for(int d=0;d<9;++d)
 		if(set(&board[(c/3)*27+(c%3)*3+(d/3)*9+(d%3)]))
-			++count[translate(board[(c/3)*27+(c%3)*3+(d/3)*9+(d%3)])-1];
-	for(int d=0;d<9;++d)
-		if(count[c]>1)
-			return 0;
+			if(++count[translate(board[(c/3)*27+(c%3)*3+(d/3)*9+(d%3)])-1]==2)
+				return 0;
   }
   return 1;
 }
@@ -397,8 +391,7 @@ int main(int args,char *argv[]){
 	fprintf(stderr,"Puzzle has a contradiction and cannot be solved\n");
 	exit(EXIT_FAILURE);
   }
-  else
-	printf("Puzzle is verified and accepted\n\nINPUT:\n");
+  printf("Puzzle is verified and accepted\n\nINPUT:\n");
   printBoard(board);
   solve(board);
   if(!verify(board)){
